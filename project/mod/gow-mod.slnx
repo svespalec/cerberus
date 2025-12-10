@@ -1,7 +1,0 @@
-<Solution>
-  <Configurations>
-    <Platform Name="x64" />
-  </Configurations>
-  <Project Path="../payload/payload.vcxproj" Id="934cd1b2-6a34-4cbe-a1e5-27f89907745b" />
-  <Project Path="gow-mod.vcxproj" Id="924facb8-6f38-469a-8862-1bd33375cc6d" />
-</Solution>
