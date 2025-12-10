@@ -8,7 +8,7 @@ a lightweight antivirus proof-of-concept that detects and blocks malware using d
 
 ## how it works
 
-we register a process instrumentation callback that intercepts every kernel to user transition (sysret). on each syscall return, we validate that the return address (r10) points to a legitimate system module (ntdll.dll/win32u.dll). if not, the syscall originated from unauthorized code (direct syscall) and the process is terminated.
+we register a process instrumentation callback that intercepts every kernel to user transition (sysret). on each syscall return, we validate that the return address (r10) points to a legitimate system module (ntdll.dll/win32u.dll). if not, the syscall originated from unauthorized code (the direct syscall) and the process is terminated.
 
 ## detects
 
