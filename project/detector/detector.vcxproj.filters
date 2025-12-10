@@ -21,13 +21,21 @@
     <ClCompile Include="source\stdafx\stdafx.cxx">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="source\callback.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="source\globals.hxx">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="source\stdafx\stdafx.hxx">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="source\callback.hxx">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <MASM Include="source\callback.asm">
+      <Filter>Source Files</Filter>
+    </MASM>
   </ItemGroup>
 </Project>

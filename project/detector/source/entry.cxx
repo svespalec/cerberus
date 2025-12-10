@@ -1,17 +1,19 @@
-#include <source/globals.hxx>
+#include <source/callback.hxx>
+
+static HMODULE module_handle = nullptr;
 
 void main_thread( ) {
-  std::println( "[+] base: {:p}", reinterpret_cast< void* >( globals::base ) );
+  // std::println( "[+] base: {:p}", reinterpret_cast< void* >( globals::base ) );
 
   // set instrumentation callback here
   //
 
-  FreeLibraryAndExitThread( globals::module_handle, 0 );
+  FreeLibraryAndExitThread( module_handle, 0 );
 }
 
 BOOL APIENTRY DllMain( HMODULE handle, DWORD reason, [[maybe_unused]] LPVOID reserved ) {
   if ( reason == DLL_PROCESS_ATTACH ) {
-    globals::module_handle = handle;
+    module_handle = handle;
 
     DisableThreadLibraryCalls( handle );
     CreateThread( nullptr, 0, reinterpret_cast< LPTHREAD_START_ROUTINE >( main_thread ), nullptr, 0, nullptr );

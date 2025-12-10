@@ -1,11 +1,12 @@
 #pragma once
 
+#include <print>
+#include <optional>
+
 #define WIN32_LEAN_AND_MEAN
 
 #include <windows.h>
-#include <cstdint>
-#include <print>
-#include <optional>
-#include <span>
-#include <string_view>
-#include <vector>
+#include <winnt.h>
+#include <winternl.h>
+
+#pragma comment( lib, "ntdll.lib" )
