@@ -26,7 +26,7 @@ BOOLEAN engine::add_callback( VECTORED_INSTRUMENTATION_CALLBACK callback ) {
   }
 
   // release the spinlock
-  g_callback_list_spinlock = FALSE;
+  _InterlockedExchange8( &g_callback_list_spinlock, FALSE );
 
   return result;
 }
@@ -49,7 +49,7 @@ BOOLEAN engine::remove_callback( LPVOID callback ) {
   }
 
   // release the spinlock
-  g_callback_list_spinlock = FALSE;
+  _InterlockedExchange8( &g_callback_list_spinlock, FALSE );
 
   return result;
 }
