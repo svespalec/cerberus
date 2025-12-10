@@ -38,7 +38,7 @@ static bool load_detector( ) {
     return false;
   }
 
-  std::println( "[*] loaded detector module!" );
+  std::println( "[*] loaded detector module" );
 
   return true;
 }
@@ -59,7 +59,7 @@ static void test_direct_syscall( ) {
     return;
   }
 
-  std::println( "[*] NtClose SSN: {:#x}", ssn );
+  std::println( "[*] NtClose syscall number: {:#x}", ssn );
   std::println( "[*] executing direct syscall..." );
 
   // patch ssn into stub

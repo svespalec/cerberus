@@ -1,5 +1,23 @@
 #include <source/callback.hxx>
 
+// get module name containing an address
+static const char* get_module_name( void* address ) {
+  static char module_name[ MAX_PATH ];
+
+  HMODULE module = nullptr;
+
+  if ( !GetModuleHandleExA( GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS, static_cast< LPCSTR >( address ), &module ) )
+    return "unknown";
+
+  if ( !GetModuleFileNameA( module, module_name, MAX_PATH ) )
+    return "unknown";
+
+  // get just the filename
+  char* name = strrchr( module_name, '\\' );
+
+  return name ? name + 1 : module_name;
+}
+
 // check if address falls within a module's memory range
 static BOOLEAN is_in_module( void* address, const char* module_name ) {
   HMODULE module = GetModuleHandleA( module_name );
@@ -23,9 +41,16 @@ static VOID syscall_detector( PCONTEXT ctx ) {
   void* return_addr = reinterpret_cast< void* >( ctx->R10 );
 
   if ( !is_in_module( return_addr, "ntdll.dll" ) && !is_in_module( return_addr, "win32u.dll" ) ) {
-    std::println( "[!] direct syscall detected and process terminated." );
+    std::println( "[!] direct syscall detected!" );
+    std::println( "[*] return address: {:p}", return_addr );
+    std::println( "[*] origin module: {}", get_module_name( return_addr ) );
+    std::println( "[*] thread id: {}", GetCurrentThreadId( ) );
+    std::println( "[*] rip: {:p}", reinterpret_cast< void* >( ctx->Rip ) );
+    std::println( "[*] rsp: {:p}", reinterpret_cast< void* >( ctx->Rsp ) );
+    std::println( "[*] rax (syscall): {:#x}", ctx->Rax );
+    std::println( "[!] terminating process..." );
 
-    TerminateProcess( ( HANDLE ) -1, 0xDEAD );
+    TerminateProcess( HANDLE( -1 ), 0xDEAD );
   }
 }
 
