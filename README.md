@@ -1,7 +1,11 @@
-## syscall-detector
+## cerberus 
 
-a lightweight antivirus proof-of-concept that detects and blocks malware using direct syscalls via windows instrumentation callbacks.
+a lightweight proof-of-concept that detects and blocks malware using direct syscalls via windows instrumentation callbacks.
 
+## why cerberus?
+
+in greek mythology, cerberus is the three-headed dog that guards the gates of the underworld. [hell's gate](https://github.com/am0nsec/HellsGate) was a famous direct syscall technique, so cerberus stands watch, catching anyone trying to sneak through.
+  
 ## showcase
 
 ![showcase](showcase/showcase.png)
