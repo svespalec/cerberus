@@ -10,4 +10,6 @@ int main( ) {
   }
 
   std::println( "[*] loaded detector module!" );
+
+  system( "pause" );
 }
