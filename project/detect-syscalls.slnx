@@ -1,0 +1,10 @@
+<Solution>
+  <Configurations>
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Project Path="mod/gow-mod.vcxproj" Id="924facb8-6f38-469a-8862-1bd33375cc6d">
+    <Platform Project="x64" />
+  </Project>
+  <Project Path="payload/payload.vcxproj" Id="934cd1b2-6a34-4cbe-a1e5-27f89907745b" />
+</Solution>
