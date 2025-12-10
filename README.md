@@ -2,13 +2,17 @@
 
 a lightweight antivirus proof-of-concept that detects and blocks malware using direct syscalls via windows instrumentation callbacks.
 
-## demo
+## showcase
 
-![demo](demo/demo.png)
+![showcase](showcase/showcase.png)
 
 ## how it works
 
-registers a process instrumentation callback that intercepts every kernel→user transition. on each syscall return, validates that the return address (r10) points to legitimate system modules (ntdll.dll / win32u.dll). if not, the syscall originated from unauthorized code (direct syscall) and the process is terminated.
+registers a process instrumentation callback that intercepts every kernel to user transition. 
+
+on each syscall return, we validate that the return address (r10) points to a legitimate system module (ntdll.dll/win32u.dll). 
+
+if not, the syscall originated from unauthorized code (direct syscall) and the process is terminated.
 
 ## detects
 
