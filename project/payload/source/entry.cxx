@@ -1,7 +1,11 @@
 #include <Windows.h>
 #include <print>
 
-// direct syscall stub - mov r10, rcx; mov eax, ssn; syscall; ret
+// direct syscall stub:
+// mov r10, rcx;
+// mov eax, ssn;
+// syscall;
+// ret
 static unsigned char syscall_stub[] = {
   0x4C, 0x8B, 0xD1,             // mov r10, rcx
   0xB8, 0x00, 0x00, 0x00, 0x00, // mov eax, <ssn>
@@ -90,7 +94,6 @@ int main( ) {
 
   test_direct_syscall( );
 
-  system( "pause" );
-
-  return 0;
+  std::println( "[*] press enter to exit..." );
+  std::getchar( );
 }

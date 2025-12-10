@@ -47,7 +47,7 @@ static VOID syscall_detector( PCONTEXT ctx ) {
     std::println( "[*] thread id: {}", GetCurrentThreadId( ) );
     std::println( "[*] rip: {:p}", reinterpret_cast< void* >( ctx->Rip ) );
     std::println( "[*] rsp: {:p}", reinterpret_cast< void* >( ctx->Rsp ) );
-    std::println( "[*] rax (syscall): {:#x}", ctx->Rax );
+    std::println( "[*] rax (return value): {:#x}", ctx->Rax );
     std::println( "[!] terminating process..." );
 
     TerminateProcess( HANDLE( -1 ), 0xDEAD );
