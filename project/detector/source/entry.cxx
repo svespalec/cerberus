@@ -23,7 +23,7 @@ static VOID syscall_detector( PCONTEXT ctx ) {
   void* return_addr = reinterpret_cast< void* >( ctx->R10 );
 
   if ( !is_in_module( return_addr, "ntdll.dll" ) && !is_in_module( return_addr, "win32u.dll" ) ) {
-    std::println( "[!] direct syscall detected!" );
+    std::println( "[!] direct syscall detected and process terminated." );
 
     TerminateProcess( ( HANDLE ) -1, 0xDEAD );
   }

@@ -9,6 +9,8 @@ static unsigned char syscall_stub[] = {
   0xC3                          // ret
 };
 
+using nt_close_t = NTSTATUS( __stdcall* )( HANDLE );
+
 // get syscall number from ntdll export
 static DWORD get_ssn( const char* func_name ) {
   HMODULE ntdll = GetModuleHandleA( "ntdll.dll" );
@@ -16,46 +18,45 @@ static DWORD get_ssn( const char* func_name ) {
   if ( !ntdll )
     return -1;
 
-  auto func = reinterpret_cast< unsigned char* >( GetProcAddress( ntdll, func_name ) );
+  auto func = static_cast< unsigned char* >( static_cast< void* >( GetProcAddress( ntdll, func_name ) ) );
 
   if ( !func )
     return -1;
 
   // ntdll stub: mov r10, rcx; mov eax, <ssn>
-  // bytes: 4C 8B D1 B8 XX XX XX XX
-  if ( func[ 0 ] == 0x4C && func[ 1 ] == 0x8B && func[ 2 ] == 0xD1 && func[ 3 ] == 0xB8 ) {
+  if ( func[ 0 ] == 0x4C && func[ 1 ] == 0x8B && func[ 2 ] == 0xD1 && func[ 3 ] == 0xB8 )
     return *reinterpret_cast< DWORD* >( &func[ 4 ] );
-  }
 
   return -1;
 }
 
-int main( ) {
+static bool load_detector( ) {
   HMODULE detector = LoadLibraryA( "detector.dll" );
 
-  if ( detector == NULL ) {
+  if ( !detector ) {
     std::println( "[-] failed to load detector module" );
-    return -1;
+    return false;
   }
 
   std::println( "[*] loaded detector module!" );
 
-  // legit ntdll call through winapi
+  return true;
+}
+
+static void test_legit_syscall( ) {
   std::println( "[*] doing legit ntdll call via GetModuleHandleA..." );
 
   HMODULE ntdll = GetModuleHandleA( "ntdll.dll" );
 
   std::println( "[+] legit call succeeded! ntdll: {:p}", static_cast< void* >( ntdll ) );
-  std::println( "[*] triggering direct syscall in 3 seconds..." );
+}
 
-  Sleep( 3000 );
-
-  // get NtClose syscall number
+static void test_direct_syscall( ) {
   DWORD ssn = get_ssn( "NtClose" );
 
   if ( ssn == -1 ) {
     std::println( "[-] failed to get ssn" );
-    return -1;
+    return;
   }
 
   std::println( "[*] NtClose SSN: {:#x}", ssn );
@@ -65,15 +66,29 @@ int main( ) {
   *reinterpret_cast< DWORD* >( &syscall_stub[ 4 ] ) = ssn;
 
   // make stub executable
-  DWORD old_protect;
+  DWORD old_protect { };
   VirtualProtect( syscall_stub, sizeof( syscall_stub ), PAGE_EXECUTE_READWRITE, &old_protect );
 
   // call direct syscall with invalid handle which should trigger detector
-  auto direct_syscall = reinterpret_cast< NTSTATUS( __stdcall* )( HANDLE ) >( static_cast< void* >( syscall_stub ) );
-  direct_syscall( reinterpret_cast< HANDLE >( static_cast< uintptr_t >( 0xDEADBEEF ) ) );
+  auto nt_close = reinterpret_cast< nt_close_t >( &syscall_stub );
+
+  nt_close( HANDLE( -1 ) );
 
   // if we get here, detector didn't catch it
   std::println( "[-] direct syscall was NOT detected!" );
+}
+
+int main( ) {
+  if ( !load_detector( ) )
+    return -1;
+
+  test_legit_syscall( );
+
+  std::println( "[*] triggering direct syscall in 3 seconds..." );
+
+  Sleep( 3000 );
+
+  test_direct_syscall( );
 
   system( "pause" );
 
