@@ -2,7 +2,7 @@
 
 // get module name containing an address
 static const char* get_module_name( void* address ) {
-  static char module_name[ MAX_PATH ];
+  static thread_local char module_name[ MAX_PATH ];
 
   HMODULE module = nullptr;
 
@@ -54,20 +54,16 @@ static VOID syscall_detector( PCONTEXT ctx ) {
   }
 }
 
-void main_thread( ) {
-  engine::initialize( );
-  engine::add_callback( syscall_detector );
-
-  // keep dll loaded. don't free since callback is active
-  while ( true ) {
-    Sleep( 1000 );
-  }
-}
-
 BOOL APIENTRY DllMain( HMODULE handle, DWORD reason, [[maybe_unused]] LPVOID reserved ) {
   if ( reason == DLL_PROCESS_ATTACH ) {
     DisableThreadLibraryCalls( handle );
-    CreateThread( nullptr, 0, reinterpret_cast< LPTHREAD_START_ROUTINE >( main_thread ), nullptr, 0, nullptr );
+
+    // pin dll in memory so it can't be freed while the callback is active
+    HMODULE pinned = nullptr;
+    GetModuleHandleExA( GET_MODULE_HANDLE_EX_FLAG_PIN, reinterpret_cast< LPCSTR >( handle ), &pinned );
+
+    engine::initialize( );
+    engine::add_callback( syscall_detector );
   }
 
   return TRUE;
