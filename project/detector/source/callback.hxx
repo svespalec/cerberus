@@ -8,33 +8,27 @@ typedef struct _INSTRUMENTATION_CALLBACK_INFORMATION {
   PVOID callback;
 } INSTRUMENTATION_CALLBACK_INFORMATION, *PINSTRUMENTATION_CALLBACK_INFORMATION;
 
-typedef VOID( WINAPI* VECTORED_INSTRUMENTATION_CALLBACK )( PCONTEXT previous_context );
+typedef void( WINAPI* VECTORED_INSTRUMENTATION_CALLBACK )( PCONTEXT previous_context );
 
 namespace engine {
   // registered instrumentation callbacks
   inline VECTORED_INSTRUMENTATION_CALLBACK g_callbacks[ MAX_INSTRUMENTATION_CALLBACKS ];
 
   // spinlock for thread-safe callback list access
-  inline CHAR g_callback_list_spinlock = NULL;
+  inline char g_callback_list_spinlock = false;
 
   // initialize instrumentation callbacks for the current process
-  NTSTATUS initialize( VOID );
+  NTSTATUS initialize( );
 
-  // add a vectored instrumentation callback to the global list of callbacks
-  // returns TRUE if the function succeeds, FALSE if it fails
-  BOOLEAN add_callback( VECTORED_INSTRUMENTATION_CALLBACK callback );
-
-  // remove a vectored instrumentation callback from the global list of callbacks
-  // returns TRUE if the function succeeds, FALSE if it fails
-  BOOLEAN remove_callback( LPVOID callback );
+  bool add_callback( VECTORED_INSTRUMENTATION_CALLBACK callback );
+  bool remove_callback( VECTORED_INSTRUMENTATION_CALLBACK callback );
 
   // handler called by asm stub on each syscall return
-  extern "C" VOID callback_handler( PCONTEXT previous_context );
+  extern "C" void callback_handler( PCONTEXT previous_context );
 } // namespace engine
 
 extern "C" {
   NTSTATUS NTSYSAPI NtSetInformationProcess( HANDLE, PROCESS_INFORMATION_CLASS, LPVOID, DWORD );
 
-  // asm entry point for instrumentation callback
-  VOID callback_entry( VOID );
+  void callback_entry( );
 }

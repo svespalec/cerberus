@@ -1,75 +1,84 @@
 #include "callback.hxx"
 
-NTSTATUS engine::initialize( VOID ) {
+// RAII spinlock guard to eliminate duplicate acquire/release logic
+struct spinlock_guard
+{
+  char& lock;
+
+  spinlock_guard( char& lock ) : lock( lock )
+  {
+    while ( _InterlockedExchange8( &lock, true ) == true )
+    {
+      _mm_pause( );
+    }
+  }
+
+  ~spinlock_guard( )
+  {
+    _InterlockedExchange8( &lock, false );
+  }
+};
+
+NTSTATUS engine::initialize( )
+{
   RtlZeroMemory( g_callbacks, sizeof( g_callbacks ) );
 
   INSTRUMENTATION_CALLBACK_INFORMATION callback_info { .callback = callback_entry };
 
-  return NtSetInformationProcess( ( HANDLE ) -1, ( PROCESS_INFORMATION_CLASS ) 40, &callback_info, sizeof( callback_info ) );
+  return NtSetInformationProcess(
+    reinterpret_cast< HANDLE >( -1 ),
+    static_cast< PROCESS_INFORMATION_CLASS >( 40 ),
+    &callback_info,
+    sizeof( callback_info )
+  );
 }
 
-BOOLEAN engine::add_callback( VECTORED_INSTRUMENTATION_CALLBACK callback ) {
-  // acquire spinlock to prevent race conditions in multi-threaded adds and removes
-  while ( _InterlockedExchange8( &g_callback_list_spinlock, TRUE ) == TRUE ) {
-    _mm_pause( );
-  }
+bool engine::add_callback( VECTORED_INSTRUMENTATION_CALLBACK callback )
+{
+  spinlock_guard guard( g_callback_list_spinlock );
 
-  BOOLEAN result = FALSE;
-
-  for ( UINT32 i = NULL; i < MAX_INSTRUMENTATION_CALLBACKS; i++ ) {
-    // search for the next available callback slot to occupy with our callback
-    if ( g_callbacks[ i ] == NULL ) {
+  for ( uint32_t i = 0; i < MAX_INSTRUMENTATION_CALLBACKS; i++ )
+  {
+    if ( g_callbacks[ i ] == nullptr )
+    {
       g_callbacks[ i ] = callback;
-      result           = TRUE;
-      break;
+      return true;
     }
   }
 
-  // release the spinlock
-  _InterlockedExchange8( &g_callback_list_spinlock, FALSE );
-
-  return result;
+  return false;
 }
 
-BOOLEAN engine::remove_callback( LPVOID callback ) {
-  // acquire spinlock to prevent race conditions in multi-threaded adds and removes
-  while ( _InterlockedExchange8( &g_callback_list_spinlock, TRUE ) == TRUE ) {
-    _mm_pause( );
-  }
+bool engine::remove_callback( VECTORED_INSTRUMENTATION_CALLBACK callback )
+{
+  spinlock_guard guard( g_callback_list_spinlock );
 
-  BOOLEAN result = FALSE;
-
-  for ( UINT32 i = NULL; i < MAX_INSTRUMENTATION_CALLBACKS; i++ ) {
-    // search for the callback that matches the function pointer to invalidate the slot
-    if ( g_callbacks[ i ] == callback ) {
-      g_callbacks[ i ] = NULL;
-      result           = TRUE;
-      break;
+  for ( uint32_t i = 0; i < MAX_INSTRUMENTATION_CALLBACKS; i++ )
+  {
+    if ( g_callbacks[ i ] == callback )
+    {
+      g_callbacks[ i ] = nullptr;
+      return true;
     }
   }
 
-  // release the spinlock
-  _InterlockedExchange8( &g_callback_list_spinlock, FALSE );
-
-  return result;
+  return false;
 }
 
-VOID engine::callback_handler( PCONTEXT previous_context ) {
-  // TEB->InstrumentationCallbackDisabled prevents recursion
-  CHAR* callback_disabled = ( CHAR* ) ( __readgsqword( 0x30 ) + 0x2EC );
+void engine::callback_handler( PCONTEXT previous_context )
+{
+  auto callback_disabled = reinterpret_cast< char* >( __readgsqword( 0x30 ) + 0x2EC );
 
-  // prevent recursion inside our instrumentation callback
-  if ( _InterlockedExchange8( callback_disabled, TRUE ) == FALSE ) {
-    for ( UINT32 i = NULL; i < MAX_INSTRUMENTATION_CALLBACKS; i++ ) {
-      if ( g_callbacks[ i ] != NULL ) {
+  if ( _InterlockedExchange8( callback_disabled, true ) == false )
+  {
+    for ( uint32_t i = 0; i < MAX_INSTRUMENTATION_CALLBACKS; i++ )
+    {
+      if ( g_callbacks[ i ] != nullptr )
         g_callbacks[ i ]( previous_context );
-      }
     }
 
-    // remove the recursion lock
-    *callback_disabled = FALSE;
+    *callback_disabled = false;
   }
 
-  // restore context after the instrumentation callback
-  RtlRestoreContext( previous_context, NULL );
+  RtlRestoreContext( previous_context, nullptr );
 }

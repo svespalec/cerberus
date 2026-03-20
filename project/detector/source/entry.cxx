@@ -1,7 +1,8 @@
 #include <source/callback.hxx>
 
 // get module name containing an address
-static const char* get_module_name( void* address ) {
+static const char* get_module_name( void* address )
+{
   static thread_local char module_name[ MAX_PATH ];
 
   HMODULE module = nullptr;
@@ -19,16 +20,17 @@ static const char* get_module_name( void* address ) {
 }
 
 // check if address falls within a module's memory range
-static BOOLEAN is_in_module( void* address, const char* module_name ) {
+static bool is_in_module( void* address, const char* module_name )
+{
   HMODULE module = GetModuleHandleA( module_name );
 
   if ( !module )
-    return FALSE;
+    return false;
 
   MODULEINFO info { };
 
   if ( !GetModuleInformation( GetCurrentProcess( ), module, &info, sizeof( info ) ) )
-    return FALSE;
+    return false;
 
   auto base = reinterpret_cast< uintptr_t >( info.lpBaseOfDll );
   auto addr = reinterpret_cast< uintptr_t >( address );
@@ -37,10 +39,12 @@ static BOOLEAN is_in_module( void* address, const char* module_name ) {
 }
 
 // callback invoked on every syscall return
-static VOID syscall_detector( PCONTEXT ctx ) {
+static void syscall_detector( PCONTEXT ctx )
+{
   void* return_addr = reinterpret_cast< void* >( ctx->R10 );
 
-  if ( !is_in_module( return_addr, "ntdll.dll" ) && !is_in_module( return_addr, "win32u.dll" ) ) {
+  if ( !is_in_module( return_addr, "ntdll.dll" ) && !is_in_module( return_addr, "win32u.dll" ) )
+  {
     std::println( "[!] direct syscall detected!" );
     std::println( "[*] return address: {:p}", return_addr );
     std::println( "[*] origin module: {}", get_module_name( return_addr ) );
@@ -54,8 +58,10 @@ static VOID syscall_detector( PCONTEXT ctx ) {
   }
 }
 
-BOOL APIENTRY DllMain( HMODULE handle, DWORD reason, [[maybe_unused]] LPVOID reserved ) {
-  if ( reason == DLL_PROCESS_ATTACH ) {
+BOOL APIENTRY DllMain( HMODULE handle, DWORD reason, [[maybe_unused]] LPVOID reserved )
+{
+  if ( reason == DLL_PROCESS_ATTACH )
+  {
     DisableThreadLibraryCalls( handle );
 
     // pin dll in memory so it can't be freed while the callback is active

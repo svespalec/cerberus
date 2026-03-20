@@ -1,11 +1,9 @@
 #include <Windows.h>
 #include <print>
 
-// direct syscall stub:
-// mov r10, rcx;
-// mov eax, ssn;
-// syscall;
-// ret
+//
+// direct syscall stub
+//
 static unsigned char syscall_stub[] = {
   0x4C, 0x8B, 0xD1,             // mov r10, rcx
   0xB8, 0x00, 0x00, 0x00, 0x00, // mov eax, <ssn>
@@ -16,7 +14,8 @@ static unsigned char syscall_stub[] = {
 using nt_close_t = NTSTATUS( __stdcall* )( HANDLE );
 
 // get syscall number from ntdll export
-static DWORD get_ssn( const char* func_name ) {
+static DWORD get_ssn( const char* func_name )
+{
   HMODULE ntdll = GetModuleHandleA( "ntdll.dll" );
 
   if ( !ntdll )
@@ -34,10 +33,12 @@ static DWORD get_ssn( const char* func_name ) {
   return -1;
 }
 
-static bool load_detector( ) {
+static bool load_detector( )
+{
   HMODULE detector = LoadLibraryA( "detector.dll" );
 
-  if ( !detector ) {
+  if ( !detector )
+  {
     std::println( "[-] failed to load detector module" );
     return false;
   }
@@ -47,7 +48,8 @@ static bool load_detector( ) {
   return true;
 }
 
-static void test_legit_syscall( ) {
+static void test_legit_syscall( )
+{
   std::println( "[*] doing legit ntdll call via GetModuleHandleA..." );
 
   HMODULE ntdll = GetModuleHandleA( "ntdll.dll" );
@@ -55,10 +57,12 @@ static void test_legit_syscall( ) {
   std::println( "[+] legit call succeeded! ntdll: {:p}", static_cast< void* >( ntdll ) );
 }
 
-static void test_direct_syscall( ) {
+static void test_direct_syscall( )
+{
   DWORD ssn = get_ssn( "NtClose" );
 
-  if ( ssn == -1 ) {
+  if ( ssn == -1 )
+  {
     std::println( "[-] failed to get ssn" );
     return;
   }
@@ -82,7 +86,8 @@ static void test_direct_syscall( ) {
   std::println( "[-] direct syscall was NOT detected!" );
 }
 
-int main( ) {
+int main( )
+{
   if ( !load_detector( ) )
     return -1;
 
